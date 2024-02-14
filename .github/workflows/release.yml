@@ -31,7 +31,20 @@ jobs:
   #       env:
   #         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
   #         NPM_CONFIG_PROVENANCE: true
-          
+  
+  fetch-version-from-npm:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      - name: Get latest package version
+        id: get_version
+        run: |
+          VERSION=$(curl -s https://registry.npmjs.org/classnames/latest | jq -r '.version')
+          echo "::set-output name=version::$VERSION"
+
   create-github-release:
     name: Create GitHub Release
     runs-on: ubuntu-latest
@@ -41,6 +54,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Create Release
-        run: gh release create testRelease --generate-notes
+        run: gh release create ${{ needs.fetch-version-from-npm.outputs.version}} --generate-notes
         env:
           GH_TOKEN: ${{ github.token }}
